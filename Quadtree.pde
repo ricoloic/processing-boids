@@ -1,7 +1,7 @@
-class Quadtree <E extends PVector> {
+class Quadtree {
   int capacity;
   Boundary boundary;
-  ArrayList<E> elements = new ArrayList<>();
+  ArrayList<Boid> elements = new ArrayList<>();
   
   Quadtree tl = null;
   Quadtree tr = null;
@@ -27,8 +27,8 @@ class Quadtree <E extends PVector> {
     this.divided = true;
   }
 
-  boolean insert(E point) {
-    if (!this.boundary.contains(point.x, point.y)) return false;
+  boolean insert(Boid point) {
+    if (!this.boundary.contains(point.pos.x, point.pos.y)) return false;
     
     if (this.elements.size() < capacity) {
       this.elements.add(point);
@@ -45,10 +45,10 @@ class Quadtree <E extends PVector> {
     return false;
   }
 
-  void query(Range range, ArrayList<E> elements) {
+  void query(Range range, ArrayList<Boid> elements) {
     if (this.boundary.intersect(range)) {
-      for (E e : this.elements) {
-        if (range.contains(e.x, e.y)) {
+      for (Boid e : this.elements) {
+        if (range.contains(e.pos.x, e.pos.y)) {
           elements.add(e);
         }
       }

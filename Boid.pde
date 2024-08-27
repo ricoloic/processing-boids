@@ -1,128 +1,92 @@
-class Boid extends PVector {
+class Boid {
+  PVector pos;
   PVector vel;
   PVector acc;
-  PVector avgVel = new PVector();
-  PVector avgPos = new PVector();
-  PVector avgSep = new PVector();
+  
 
-  float startAngle = 0;
-  float endAngle = 0;
-
-  Boid(PVector pos) {
-    super(pos.x, pos.y);
-    this.vel = new PVector(random(-1, 1), random(-1, 1)).setMag(4);
-    this.acc = new PVector();
-    avgVel = new PVector();
-    avgPos = new PVector();
-    avgSep = new PVector();
+  Boid(float x, float y) {
+    pos = new PVector(x, y);
+    vel = PVector.fromAngle(random(0, TWO_PI)).setMag(random(0, 4));
+    acc = new PVector();
   }
-
+  
   void applyForce(PVector force) {
     acc.add(force);
   }
-
+  
   void update() {
-    vel.add(acc).setMag(IDLE_SPEED);
-    calcAngles();
-    add(vel);
+    vel.add(acc).setMag(BOID_SPEED);
+    pos.add(vel);
     acc.mult(0);
   }
 
-  void edge() {
-    if (x < 0) x = width;
-    else if (x > width) x = 0;
-    if (y < 0) y = height;
-    else if (y > height) y = 0;
-  }
-
-  void calcAngles() {
-    startAngle = vel.heading() - ARC_ANGLE;
-    endAngle = vel.heading() + ARC_ANGLE;
-  }
-
   void steer(ArrayList<Boid> boids) {
-    int validBoidsCount = 0;
-    avgVel = new PVector();
-    avgPos = new PVector();
-    avgSep = new PVector();
+    int amt = 0;
+    PVector alignment = new PVector(0, 0);
+    PVector separation = new PVector(0, 0);
+    PVector cohesion = new PVector(0, 0);
 
     for (Boid boid : boids) {
       if (boid == this) continue;
-      float distance = PVector.dist(boid, this);
-      if (distance >= VIEW_RADIUS) continue;
-      float a = atan2(boid.y - y, boid.x - x);
-      if (!(startAngle < a && a < endAngle)) continue;
+      float distance = dist(pos.x, pos.y, boid.pos.x, boid.pos.y);
+      if (distance > RADIUS_DISTANCE) continue;
+      
+      float heading = vel.heading();
+      float s = heading - ARC_ANGLE;
+      float e = heading + ARC_ANGLE;
+      //A = atan2 (Y - CenterY, X - CenterX)
+      float a = atan2(boid.pos.y - pos.y, boid.pos.x - pos.x);
+      
+      if (!(s < a && a < e)) continue;
 
-      avgVel.add(boid.vel);
-      avgPos.add(boid);
-      avgSep.add(PVector.sub(this, boid).div(distance));
-
-      validBoidsCount++;
+      alignment.add(boid.vel);
+      cohesion.add(boid.pos);
+      separation.add(PVector.sub(this.pos, boid.pos).div(distance));
+      
+      amt++;
     }
 
-    if (validBoidsCount == 0) return;
+    if (amt == 0) return;
 
-    applyForce(avgVel
-      .div(validBoidsCount)
-      .sub(vel)
-      .mult(ALIGNMENT_FORCE));
-    applyForce(avgPos
-      .div(validBoidsCount)
-      .sub(this).sub(vel)
-      .mult(COHESION_FORCE));
-    applyForce(avgSep
-      .div(validBoidsCount)
-      .sub(vel)
-      .mult(SEPARATION_FORCE));
+    applyForce(alignment.div(amt).sub(vel).mult(ALIGNMENT_FORCE));
+    applyForce(cohesion.div(amt).sub(vel).sub(pos).mult(COHESION_FORCE));
+    applyForce(separation.div(amt).sub(vel).mult(SEPARATION_FORCE));
   }
-
+  
   void avoid() {
-    float distanceL = x;
-    if (distanceL < WALL_SEPARATION) {
-      applyForce(PVector.fromAngle(0).setMag(WALL_SEPARATION - distanceL));
+    float distLeft = pos.x;
+    if (distLeft < 75) {
+      applyForce(PVector.fromAngle(0).mult(75 - distLeft)); 
     }
-
-    float distanceT = y;
-    if (distanceT < WALL_SEPARATION) {
-      applyForce(PVector.fromAngle(HALF_PI).setMag(WALL_SEPARATION - distanceT));
+    float distTop = pos.y;
+    if (distTop < 75) {
+      applyForce(PVector.fromAngle(HALF_PI).mult(75 - distTop)); 
     }
-
-    float distanceR = width - x;
-    if (distanceR < WALL_SEPARATION) {
-      applyForce(PVector.fromAngle(PI).setMag(WALL_SEPARATION - distanceR));
+    float distRight = width - pos.x;
+    if (distRight < 75) {
+      applyForce(PVector.fromAngle(PI).mult(75 - distRight)); 
     }
-
-    float distanceB = height - y;
-    if (distanceB < WALL_SEPARATION) {
-      applyForce(PVector.fromAngle(PI + HALF_PI).setMag(WALL_SEPARATION - distanceB));
+    float distBottom = height - pos.y;
+    if (distBottom < 75) {
+      applyForce(PVector.fromAngle(PI + HALF_PI).mult(75 - distBottom)); 
     }
   }
 
   void show() {
-    if (DRAW_VELOCITY) {
-      strokeWeight(2);
-      stroke(220, 60, 90);
-      line(x, y, x + vel.x * 10, y + vel.y * 10);
-    }
-    if (DRAW_CIRCLE) {
-      strokeWeight(1);
-      noFill();
-      stroke(200);
-      circle(x, y, VIEW_RADIUS * 2);
-    }
-    if (DRAW_ARC) {
-      strokeWeight(1);
-      noFill();
-      stroke(200);
-      arc(x, y, VIEW_DIAMETER, VIEW_DIAMETER, startAngle, endAngle, PIE);
-    }
-
-    strokeWeight(10);
+    stroke(210, 90, 70, 220);
+    strokeWeight(3);
+    PVector temp = vel.copy().setMag(30).add(pos);
+    line(pos.x, pos.y, temp.x, temp.y);
+    
+    noFill();
+    stroke(120, 60, 210, 100);
+    strokeWeight(2);
+    float heading = vel.heading();
+    float s = heading - ARC_ANGLE;
+    float e = heading + ARC_ANGLE;
+    arc(pos.x, pos.y, DIAMETER_DISTANCE, DIAMETER_DISTANCE, s, e);
     stroke(255);
-    pushMatrix();
-    translate(x, y);
-    //rotate(vel.heading());
-    point(0, 0);
-    popMatrix();
+    strokeWeight(10);
+    point(pos.x, pos.y);
   }
 }
