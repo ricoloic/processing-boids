@@ -1,4 +1,4 @@
-int FLOCK_SIZE = 250;
+int FLOCK_SIZE = 500;
 
 float RADIUS_DISTANCE = 50;
 float DIAMETER_DISTANCE = RADIUS_DISTANCE * 2;
@@ -8,7 +8,7 @@ float ALIGNMENT_FORCE = 0.03;
 float SEPARATION_FORCE = 0.9;
 float COHESION_FORCE = 0.025;
 
-float BOID_SPEED = 5;
+float BOID_SPEED = 10;
 
 Boid[] flock = new Boid[FLOCK_SIZE];
 

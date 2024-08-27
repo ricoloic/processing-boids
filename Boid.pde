@@ -86,7 +86,7 @@ class Boid {
     float e = heading + ARC_ANGLE;
     arc(pos.x, pos.y, DIAMETER_DISTANCE, DIAMETER_DISTANCE, s, e);
     stroke(255);
-    strokeWeight(10);
+    strokeWeight(5);
     point(pos.x, pos.y);
   }
 }
